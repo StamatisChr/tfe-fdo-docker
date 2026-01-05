@@ -95,23 +95,9 @@ Do you want to perform these actions?
 ```
 Wait until you see the apply completed message and the output values. 
 
-Example:
-```
-Apply complete! Resources: 9 added, 0 changed, 0 destroyed.
-
-Outputs:
-...
-first_user_instructions=
-...
-
-```
-
 Wait about 7-8 minutes for Terraform Enterprise to initialize.
 
-Use the commands from the output with name `first_user_instructions` to set up your first admin user.
-
-Visit the official documentation to learn more about Terraform Enterprise application administration:
-https://developer.hashicorp.com/terraform/enterprise/application-administration/general
+Use the output values to connect to the Terraform Enterprise web UI.
 
 ## Clean up
 

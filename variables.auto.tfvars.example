@@ -3,8 +3,7 @@
 # replace only the values in the "< >" placeholders
 
 aws_region                    = "<aws_region>"            # Set here your desired AWS region, example: eu-west-1
-tfe_instance_type             = "<aws_ec2_instance_type>" # Set here the EC2 instance type only architecture x86_64 is supported, example: m5.xlarge
-my_key_name                   = "<aws_ssh_key_name>"      # the AWS SSH key name  (region specific, it should exist in the same AWS region as the one set above)
+tfe_instance_type             = "<aws_ec2_instance_type>" # Set here the EC2 instance type example: m5.xlarge
 hosted_zone_name              = "<dns_zone_name>"         # your AWS route53 DNS zone name
 tfe_dns_record                = "<tfe_host_record>"       # the host record for your TFE instance on your dns zone, example: my-tfe
 tfe_license                   = "<tfe_license_string>"    # TFE license string
