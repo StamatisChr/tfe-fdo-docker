@@ -3,7 +3,6 @@ packages:
   - ca-certificates
   - curl
 
-
 write_files:
   - path: /etc/terraform-enterprise/docker-compose.yml
     content: |
@@ -77,12 +76,9 @@ write_files:
       "password": "${admin_password}"
       }
     
-
-    
 runcmd:
 # Install Docker
-  - curl https://raw.githubusercontent.com/StamatisChr/scripts/main/docker-install-ubuntu.sh -o docker-install.sh
-  - bash docker-install.sh
+  - curl https://raw.githubusercontent.com/StamatisChr/scripts/main/docker-install-ubuntu.sh | sudo -E bash
 # Configure UFW for Docker
   - ufw allow in on docker0
 # Create necessary directories
@@ -117,7 +113,6 @@ runcmd:
       -v ${tfe_host_path_to_scripts}/tfe-setup:/workspace:z \
       -w /workspace \
       hashicorp/terraform:1.11 init -from-module=git::https://github.com/StamatisChr/TFE-setup-with-tfe-provider.git
-
   - |
     docker run --rm \
       -e TF_VAR_admin_token=$${ADMIN_TOKEN} \
@@ -128,4 +123,3 @@ runcmd:
       -v ${tfe_host_path_to_scripts}/tfe-setup:/workspace:z \
       -w /workspace \
       hashicorp/terraform:1.11 apply --auto-approve
-
