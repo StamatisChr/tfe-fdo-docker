@@ -1,125 +1,138 @@
 #cloud-config
 packages:
-  - ca-certificates
-  - curl
+- ca-certificates
+- curl
 
 write_files:
-  - path: /etc/terraform-enterprise/docker-compose.yml
-    content: |
-      ---
-      name: "terraform-enterprise"
-      services:
-        tfe:
-          image: "images.releases.hashicorp.com/hashicorp/terraform-enterprise:${tfe_version_image}"
-          environment:
-            TFE_LICENSE: "${tfe_license}"
-            TFE_HOSTNAME: "${tfe_hostname}"
-            TFE_ENCRYPTION_PASSWORD: "${tfe_encryption_password}"
-            TFE_OPERATIONAL_MODE: "disk"
-            TFE_DISK_CACHE_VOLUME_NAME: "$${COMPOSE_PROJECT_NAME}_terraform-enterprise-cache"
-            TFE_TLS_CERT_FILE: "/etc/ssl/private/terraform-enterprise/${cert}"
-            TFE_TLS_KEY_FILE: "/etc/ssl/private/terraform-enterprise/${key}"
-            TFE_TLS_CA_BUNDLE_FILE: "/etc/ssl/private/terraform-enterprise/${bundle}"
-            TFE_HTTP_PORT: ${tfe_http_port}
-            TFE_HTTPS_PORT: ${tfe_https_port}
-            TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
-          cap_add:
-            - IPC_LOCK
-          read_only: true
-          tmpfs:
-            - /tmp:mode=01777
-            - /run
-            - /var/log/terraform-enterprise
-          ports:
-            - "80:${tfe_http_port}"
-            - "443:${tfe_https_port}"
-            - "${tfe_admin_https_port}:${tfe_admin_https_port}"
-          volumes:
-            - type: bind
-              source: /var/run/docker.sock
-              target: /run/docker.sock
-            - type: bind
-              source: "${tfe_host_path_to_certificates}"
-              target: /etc/ssl/private/terraform-enterprise
-            - type: bind
-              source: "${tfe_host_path_to_data}"
-              target: /var/lib/terraform-enterprise
-            - type: volume
-              source: terraform-enterprise-cache
-              target: /var/cache/tfe-task-worker/terraform
-      volumes:
-        terraform-enterprise-cache:
-    permissions: '0640'
+- path: /etc/terraform-enterprise/docker-compose.yml
+  content: |
+    ---
+    name: "terraform-enterprise"
+    services:
+      tfe:
+        image: "images.releases.hashicorp.com/hashicorp/terraform-enterprise:${tfe_version_image}"
+        environment:
+          TFE_LICENSE: "${tfe_license}"
+          TFE_HOSTNAME: "${tfe_hostname}"
+          TFE_ENCRYPTION_PASSWORD: "${tfe_encryption_password}"
+          TFE_OPERATIONAL_MODE: "disk"
+          TFE_DISK_CACHE_VOLUME_NAME: "$${COMPOSE_PROJECT_NAME}_terraform-enterprise-cache"
+          TFE_TLS_CERT_FILE: "/etc/ssl/private/terraform-enterprise/${cert}"
+          TFE_TLS_KEY_FILE: "/etc/ssl/private/terraform-enterprise/${key}"
+          TFE_TLS_CA_BUNDLE_FILE: "/etc/ssl/private/terraform-enterprise/${bundle}"
+          TFE_HTTP_PORT: ${tfe_http_port}
+          TFE_HTTPS_PORT: ${tfe_https_port}
+          TFE_ADMIN_HTTPS_PORT: ${tfe_admin_https_port}
+        cap_add:
+          - IPC_LOCK
+        read_only: true
+        tmpfs:
+          - /tmp:mode=01777
+          - /run
+          - /var/log/terraform-enterprise
+        ports:
+          - "80:${tfe_http_port}"
+          - "443:${tfe_https_port}"
+          - "${tfe_admin_https_port}:${tfe_admin_https_port}"
+        volumes:
+          - type: bind
+            source: /var/run/docker.sock
+            target: /run/docker.sock
+          - type: bind
+            source: "${tfe_host_path_to_certificates}"
+            target: /etc/ssl/private/terraform-enterprise
+          - type: bind
+            source: "${tfe_host_path_to_data}"
+            target: /var/lib/terraform-enterprise
+          - type: volume
+            source: terraform-enterprise-cache
+            target: /var/cache/tfe-task-worker/terraform
+    volumes:
+      terraform-enterprise-cache:
+  permissions: '0640'
 
-  - path: /etc/systemd/system/terraform-enterprise.service
-    content: |
-      [Unit]
-      Description=Terraform Enterprise Service
-      Requires=docker.service
-      After=docker.service network.target
-      [Service]
-      Type=oneshot
-      RemainAfterExit=yes
-      WorkingDirectory=/etc/terraform-enterprise
-      ExecStart=/usr/bin/docker compose up -d
-      ExecStop=/usr/bin/docker compose down
-      TimeoutStartSec=0
-      [Install]
-      WantedBy=multi-user.target
-    permissions: '0640'
-  # The json file to create the first admin user:
-  - path: ${tfe_host_path_to_scripts}/payload.json
-    content: |
-      {
-      "username": "${admin_username}",
-      "email": "${admin_email}",
-      "password": "${admin_password}"
-      }
-    
+- path: /etc/systemd/system/terraform-enterprise.service
+  content: |
+    [Unit]
+    Description=Terraform Enterprise Service
+    Requires=docker.service
+    After=docker.service network.target
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    WorkingDirectory=/etc/terraform-enterprise
+    ExecStart=/usr/bin/docker compose up -d
+    ExecStop=/usr/bin/docker compose down
+    TimeoutStartSec=0
+    [Install]
+    WantedBy=multi-user.target
+  permissions: '0640'
+# The json file to create the first admin user:
+- path: ${tfe_host_path_to_scripts}/payload.json
+  content: |
+    {
+    "username": "${admin_username}",
+    "email": "${admin_email}",
+    "password": "${admin_password}"
+    }
+
 runcmd:
 # Install Docker
-  - curl https://raw.githubusercontent.com/StamatisChr/scripts/main/docker-install-ubuntu.sh | sudo -E bash
+- curl https://raw.githubusercontent.com/StamatisChr/scripts/main/docker-install-ubuntu.sh | sudo -E bash
 # Configure UFW for Docker
-  - ufw allow in on docker0
+- ufw allow in on docker0
 # Create necessary directories
-  - mkdir -p ${tfe_host_path_to_certificates}
-  - mkdir -p ${tfe_host_path_to_data}
-  - mkdir -p ${tfe_host_path_to_scripts}/tfe-setup
+- mkdir -p ${tfe_host_path_to_certificates}
+- mkdir -p ${tfe_host_path_to_data}
+- mkdir -p ${tfe_host_path_to_scripts}/tfe-setup
 # Spawn Certbot container to generate TLS certificates
-  - docker run --rm -p 80:80 -v ${tfe_host_path_to_certificates}:/etc/letsencrypt/archive/${tfe_hostname} certbot/certbot certonly --standalone --non-interactive --agree-tos --register-unsafely-without-email --preferred-challenges http -d ${tfe_hostname}
+- |
+  docker run --rm -p 80:80 \
+    --mount type=bind,source="${tfe_host_path_to_certificates}",target=/etc/letsencrypt/archive/${tfe_hostname} \
+    certbot/certbot certonly \
+    --standalone \
+    --non-interactive \
+    --agree-tos \
+    --register-unsafely-without-email \
+    --preferred-challenges http \
+    -d ${tfe_hostname}
 # Log in to the Terraform Enterprise container image registry and pull the image
-  - echo "${tfe_license}" | docker login --username terraform images.releases.hashicorp.com --password-stdin
-  - docker pull images.releases.hashicorp.com/hashicorp/terraform-enterprise:${tfe_version_image}
+- echo "${tfe_license}" | docker login --username terraform images.releases.hashicorp.com --password-stdin
+- docker pull images.releases.hashicorp.com/hashicorp/terraform-enterprise:${tfe_version_image}
 # Enable and start the Terraform Enterprise service
-  - systemctl enable --now terraform-enterprise
+- systemctl enable --now terraform-enterprise
 # Wait TFE to start  
-  - while [ "$(curl -fsS https://${tfe_hostname}/_health_check)" != "OK" ]; do echo "$(date +"%Y-%m-%d %H:%M:%S") Waiting TFE to start..."; sleep 20; done
+- |
+  while [ "$(curl -fsS https://${tfe_hostname}/_health_check)" != "OK" ]; do
+    echo "$(date +"%Y-%m-%d %H:%M:%S") Waiting for TFE to start..."
+    sleep 20
+  done
 # Get admin token
-  - CONTAINER_NAME=$(docker ps --filter "ancestor=images.releases.hashicorp.com/hashicorp/terraform-enterprise:${tfe_version_image}" --format "{{.Names}}")
-  - IACT_TOKEN=$(docker exec $CONTAINER_NAME tfectl admin token)
-  - echo $IACT_TOKEN
+- CONTAINER_NAME=$(docker ps --filter "ancestor=images.releases.hashicorp.com/hashicorp/terraform-enterprise:${tfe_version_image}" --format "{{.Names}}")
+- IACT_TOKEN=$(docker exec $CONTAINER_NAME tfectl admin token)
+- echo $IACT_TOKEN
 # Create the first admin user and get admin user's api token  
-  - |
-    ADMIN_TOKEN=$(curl --header "Content-Type: application/json" --request POST --data @${tfe_host_path_to_scripts}/payload.json "https://${tfe_hostname}/admin/initial-admin-user?token=$IACT_TOKEN"  | jq -r '.token' )
-  - echo $ADMIN_TOKEN
+- |
+  ADMIN_TOKEN=$(curl --header "Content-Type: application/json" --request POST --data @${tfe_host_path_to_scripts}/payload.json "https://${tfe_hostname}/admin/initial-admin-user?token=$IACT_TOKEN"  | jq -r '.token' )
+- echo $ADMIN_TOKEN
 # Generate admin api token (different from the admin user api token)
-  - |
-    ADMIN_API_TOKEN=$(docker exec $CONTAINER_NAME tfectl admin api-token generate --description "first-token" | head -n 1)
+- |
+  ADMIN_API_TOKEN=$(docker exec $CONTAINER_NAME tfectl admin api-token generate --description "first-token" | head -n 1)
 # Pull terraform docker image
-  - docker pull docker.io/hashicorp/terraform:1.11
+- docker pull docker.io/hashicorp/terraform:1.14
 # Run terraform with admin user api token to create resources in TFE (org and workspace)
-  - |
-    docker run --rm \
-      -v ${tfe_host_path_to_scripts}/tfe-setup:/workspace:z \
-      -w /workspace \
-      hashicorp/terraform:1.11 init -from-module=git::https://github.com/StamatisChr/TFE-setup-with-tfe-provider.git
-  - |
-    docker run --rm \
-      -e TF_VAR_admin_token=$${ADMIN_TOKEN} \
-      -e TF_VAR_admin_api_token=$${ADMIN_API_TOKEN} \
-      -e TF_VAR_oauth_token="${oauth_token}" \
-      -e TF_VAR_admin_email="${admin_email}" \
-      -e TF_VAR_tfe_hostname="${tfe_hostname}" \
-      -v ${tfe_host_path_to_scripts}/tfe-setup:/workspace:z \
-      -w /workspace \
-      hashicorp/terraform:1.11 apply --auto-approve
+- |
+  docker run --rm \
+    -v ${tfe_host_path_to_scripts}/tfe-setup:/workspace:z \
+    -w /workspace \
+    hashicorp/terraform:1.14 init -from-module=git::https://github.com/StamatisChr/TFE-setup-with-tfe-provider.git
+- |
+  docker run --rm \
+    -e TF_VAR_admin_token=$${ADMIN_TOKEN} \
+    -e TF_VAR_admin_api_token=$${ADMIN_API_TOKEN} \
+    -e TF_VAR_oauth_token="${oauth_token}" \
+    -e TF_VAR_admin_email="${admin_email}" \
+    -e TF_VAR_tfe_hostname="${tfe_hostname}" \
+    -v ${tfe_host_path_to_scripts}/tfe-setup:/workspace:z \
+    -w /workspace \
+    hashicorp/terraform:1.14 apply --auto-approve

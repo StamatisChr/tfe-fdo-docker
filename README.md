@@ -109,7 +109,7 @@ type yes when prompted.
 
 Wait for the resource deletion.
 ```
-Destroy complete! Resources: 9 destroyed.
+Destroy complete! Resources: destroyed.
 ```
 
 Done.
