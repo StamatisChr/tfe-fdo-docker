@@ -1,27 +1,20 @@
 # Get the latest Ubuntu 24.04 ami for the region 
-data "aws_ami" "ubuntu_2404" {
-  owners      = ["099720109477"]
-  most_recent = true
-
+data "aws_ami" "hc-base-ubuntu-2404" {
+  for_each = toset(["amd64", "arm64"])
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server*"]
+    values = [format("hc-base-ubuntu-2404-%s-*", each.value)]
   }
-
   filter {
-    name   = "architecture"
-    values = ["x86_64"]
+    name   = "state"
+    values = ["available"]
   }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+  most_recent = true
+  owners      = ["888995627335"]
 }
 
 data "aws_vpc" "my-default" {}
 
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone
 data "aws_route53_zone" "my_aws_dns_zone" {
   name = var.hosted_zone_name
 }

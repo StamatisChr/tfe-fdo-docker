@@ -1,9 +1,9 @@
 output "ubuntu_2404_ami_id" {
-  value = data.aws_ami.ubuntu_2404.id
+  value = data.aws_ami.hc-base-ubuntu-2404["amd64"].id
 }
 
 output "ubuntu_2404_ami_name" {
-  value = data.aws_ami.ubuntu_2404.name
+  value = data.aws_ami.hc-base-ubuntu-2404["amd64"].name
 }
 
 output "aws_region" {
