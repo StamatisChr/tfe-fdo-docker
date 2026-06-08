@@ -8,9 +8,9 @@ resource "random_pet" "hostname_suffix" {
 ##### EC2 instance #####
 # create ec2 instance
 resource "aws_instance" "tfe_docker_instance" {
-  ami             = data.aws_ami.hc-base-ubuntu-2404["amd64"].id
-  instance_type   = var.tfe_instance_type
-  security_groups = [aws_security_group.tfe_docker_sg.name]
+  ami                  = data.aws_ami.hc-base-ubuntu-2404["amd64"].id
+  instance_type        = var.tfe_instance_type
+  security_groups      = [aws_security_group.tfe_docker_sg.name]
   iam_instance_profile = aws_iam_instance_profile.ssm_role.name
 
   user_data = templatefile("./templates/user_data_cloud_init.tftpl", {
